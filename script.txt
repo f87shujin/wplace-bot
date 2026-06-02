@@ -6,8 +6,8 @@
 // @author       SoundOfTheSky
 // @license      MPL-2.0
 // @homepageURL  https://github.com/SoundOfTheSky/wplace-bot
-// @updateURL    https://raw.githubusercontent.com/SoundOfTheSky/wplace-bot/refs/heads/main/dist.user.js
-// @downloadURL  https://raw.githubusercontent.com/SoundOfTheSky/wplace-bot/refs/heads/main/dist.user.js
+// @updateURL    https://raw.githubusercontent.com/SoundOfTheSky/wplace-bot/main/dist.user.js
+// @downloadURL  https://raw.githubusercontent.com/SoundOfTheSky/wplace-bot/main/dist.user.js
 // @run-at       document-start
 // @match        *://*.wplace.live/*
 // @grant        none
