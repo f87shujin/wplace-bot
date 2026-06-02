@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         wplace-bot
-// @namespace    https://github.com/SoundOfTheSky
-// @version      4.5.2
+// @namespace    https://github.com/f87shujin
+// @version      4.5.4
 // @description  Bot to automate painting on website https://wplace.live
-// @author       SoundOfTheSky
+// @author       f87shujin
 // @license      MPL-2.0
-// @homepageURL  https://github.com/SoundOfTheSky/wplace-bot
-// @updateURL    https://raw.githubusercontent.com/SoundOfTheSky/wplace-bot/main/dist.user.js
-// @downloadURL  https://raw.githubusercontent.com/SoundOfTheSky/wplace-bot/main/dist.user.js
+// @homepageURL  https://github.com/f87shujin/wplace-bot
+// @updateURL    https://raw.githubusercontent.com/f87shujin/wplace-bot/main/dist.user.js
+// @downloadURL  https://raw.githubusercontent.com/f87shujin/wplace-bot/main/dist.user.js
 // @run-at       document-start
 // @match        *://*.wplace.live/*
 // @grant        none
