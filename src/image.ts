@@ -70,6 +70,7 @@ export class BotImage extends Base {
   protected readonly $drawTransparent!: HTMLInputElement
   protected readonly $export!: HTMLDivElement
   protected readonly $lock!: HTMLButtonElement
+  protected readonly $menuToggle!: HTMLButtonElement
   protected readonly $opacity!: HTMLInputElement
   protected readonly $progressLine!: HTMLDivElement
   protected readonly $progressText!: HTMLSpanElement
@@ -112,6 +113,7 @@ export class BotImage extends Base {
       $drawTransparent: '.draw-transparent',
       $export: '.export',
       $lock: '.lock',
+      $menuToggle: '.menu-toggle',
       $opacity: '.opacity',
       $progressLine: '.wprogress div',
       $progressText: '.wprogress span',
@@ -188,6 +190,24 @@ export class BotImage extends Base {
     // Export
     this.registerEvent(this.$export, 'click', this.export.bind(this))
 
+    // Menu
+    this.registerEvent(this.$menuToggle, 'click', () => {
+      const open = !this.element.classList.contains('menu-open')
+      for (const $image of document.querySelectorAll<HTMLElement>(
+        '.wimage.menu-open',
+      )) {
+        if ($image !== this.element) $image.classList.remove('menu-open')
+      }
+      if (open) {
+        this.element.classList.add('menu-open')
+        this.bot.widget.showImageSettings(this.$settings)
+      } else {
+        this.element.classList.remove('menu-open')
+        this.bot.widget.hideImageSettings(this.$settings)
+      }
+      this.update()
+    })
+
     // Move
     this.registerEvent(this.$topbar, 'mousedown', this.moveStart.bind(this))
     this.registerEvent(this.$canvas, 'mousedown', this.moveStart.bind(this))
@@ -261,6 +281,9 @@ export class BotImage extends Base {
     this.$brightness.valueAsNumber = this.pixels.brightness
     this.$strategy.value = this.strategy
     this.$opacity.valueAsNumber = this.opacity
+    const menuOpen = this.element.classList.contains('menu-open')
+    this.$menuToggle.textContent = menuOpen ? '▾' : '▴'
+    this.$menuToggle.title = menuOpen ? 'Close menu' : 'Open menu'
     this.$drawTransparent.checked = this.drawTransparentPixels
     this.$drawColorsInOrder.checked = this.drawColorsInOrder
     const maxTasks = this.pixels.pixels.length * this.pixels.pixels[0]!.length
@@ -275,6 +298,8 @@ export class BotImage extends Base {
   /** Removes image. Don't forget to remove from array inside widget. */
   public destroy() {
     super.destroy()
+    this.bot.widget.hideImageSettings(this.$settings)
+    this.element.classList.remove('menu-open')
     this.element.remove()
     removeFromArray(this.bot.images, this)
     this.bot.widget.update()

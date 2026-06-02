@@ -29,7 +29,7 @@
   top: 0;
   left: 0;
   z-index: 1000;
-  width: 256px;
+  width: 640px;
   height: 100dvh;
   border-right: var(--text) 2px solid;
   background-color: var(--background);
@@ -100,6 +100,21 @@
   font-size: 24px;
 }
 
+.wwidget .image-settings-host {
+  overflow-y: auto;
+  max-height: 240px;
+  border-top: var(--text) 2px solid;
+}
+
+.wwidget .image-settings-host .wform {
+  position: static;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  border: none;
+  background: transparent;
+}
+
 /** Image */
 .wimage {
   position: fixed;
@@ -123,10 +138,6 @@
   border: var(--text) 2px solid;
   background-color: var(--background);
   color: var(--text);
-}
-
-.wimage:hover .wrapper .wform {
-  display: block;
 }
 
 /* Settings */
@@ -313,6 +324,10 @@
 
 .wtopbar button:hover {
   background-color: var(--main-hover);
+}
+
+.wtopbar .menu-toggle {
+  width: 28px;
 }
 
 /* Resize */

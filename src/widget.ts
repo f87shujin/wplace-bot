@@ -46,6 +46,7 @@ export class Widget extends Base {
   protected readonly $progressLine!: HTMLDivElement
   protected readonly $progressText!: HTMLSpanElement
   protected readonly $images!: HTMLDivElement
+  protected readonly $imageSettingsHost!: HTMLDivElement
   protected readonly $wopenButton!: HTMLButtonElement
 
   // protected readonly $pumpkinHunt!: HTMLButtonElement
@@ -68,6 +69,7 @@ export class Widget extends Base {
       $progressLine: '.wprogress div',
       $progressText: '.wprogress span',
       $images: '.images',
+      $imageSettingsHost: '.image-settings-host',
       // $pumpkinHunt: '.pumpkin-hunt',
     })
 
@@ -184,6 +186,17 @@ export class Widget extends Base {
   public setDisabled(name: string, disabled: boolean) {
     this.element.querySelector<HTMLButtonElement>('.' + name)!.disabled =
       disabled
+  }
+
+  public showImageSettings(settings: HTMLDivElement) {
+    this.$imageSettingsHost.classList.remove('hidden')
+    this.$imageSettingsHost.replaceChildren(settings)
+  }
+
+  public hideImageSettings(settings?: HTMLDivElement) {
+    if (settings && this.$imageSettingsHost.firstElementChild !== settings) return
+    this.$imageSettingsHost.replaceChildren()
+    this.$imageSettingsHost.classList.add('hidden')
   }
 
   /** Show status of running task */

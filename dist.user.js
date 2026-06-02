@@ -375,6 +375,7 @@ function colorToCSS(colorId) {
 
 // src/image.html
 var image_default = `<div class="wtopbar">
+  <button class="menu-toggle" title="Toggle menu">▴</button>
   <button class="export">📤</button>
   <button class="lock">🔓</button>
   <button class="delete">❌</button>
@@ -717,6 +718,7 @@ class BotImage extends Base2 {
   $drawTransparent;
   $export;
   $lock;
+  $menuToggle;
   $opacity;
   $progressLine;
   $progressText;
@@ -748,6 +750,7 @@ class BotImage extends Base2 {
       $drawTransparent: ".draw-transparent",
       $export: ".export",
       $lock: ".lock",
+      $menuToggle: ".menu-toggle",
       $opacity: ".opacity",
       $progressLine: ".wprogress div",
       $progressText: ".wprogress span",
@@ -804,6 +807,21 @@ class BotImage extends Base2 {
     });
     this.registerEvent(this.$delete, "click", this.destroy.bind(this));
     this.registerEvent(this.$export, "click", this.export.bind(this));
+    this.registerEvent(this.$menuToggle, "click", () => {
+      const open = !this.element.classList.contains("menu-open");
+      for (const $image of document.querySelectorAll(".wimage.menu-open")) {
+        if ($image !== this.element)
+          $image.classList.remove("menu-open");
+      }
+      if (open) {
+        this.element.classList.add("menu-open");
+        this.bot.widget.showImageSettings(this.$settings);
+      } else {
+        this.element.classList.remove("menu-open");
+        this.bot.widget.hideImageSettings(this.$settings);
+      }
+      this.update();
+    });
     this.registerEvent(this.$topbar, "mousedown", this.moveStart.bind(this));
     this.registerEvent(this.$canvas, "mousedown", this.moveStart.bind(this));
     this.registerEvent(document, "mouseup", this.moveStop.bind(this));
@@ -864,6 +882,9 @@ class BotImage extends Base2 {
     this.$brightness.valueAsNumber = this.pixels.brightness;
     this.$strategy.value = this.strategy;
     this.$opacity.valueAsNumber = this.opacity;
+    const menuOpen = this.element.classList.contains("menu-open");
+    this.$menuToggle.textContent = menuOpen ? "▾" : "▴";
+    this.$menuToggle.title = menuOpen ? "Close menu" : "Open menu";
     this.$drawTransparent.checked = this.drawTransparentPixels;
     this.$drawColorsInOrder.checked = this.drawColorsInOrder;
     const maxTasks = this.pixels.pixels.length * this.pixels.pixels[0].length;
@@ -876,6 +897,8 @@ class BotImage extends Base2 {
   }
   destroy() {
     super.destroy();
+    this.bot.widget.hideImageSettings(this.$settings);
+    this.element.classList.remove("menu-open");
     this.element.remove();
     removeFromArray(this.bot.images, this);
     this.bot.widget.update();
@@ -1162,7 +1185,7 @@ var style_default = `/* stylelint-disable declaration-no-important */
   top: 0;
   left: 0;
   z-index: 1000;
-  width: 256px;
+  width: 640px;
   height: 100dvh;
   border-right: var(--text) 2px solid;
   background-color: var(--background);
@@ -1233,6 +1256,21 @@ var style_default = `/* stylelint-disable declaration-no-important */
   font-size: 24px;
 }
 
+.wwidget .image-settings-host {
+  overflow-y: auto;
+  max-height: 240px;
+  border-top: var(--text) 2px solid;
+}
+
+.wwidget .image-settings-host .wform {
+  position: static;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  border: none;
+  background: transparent;
+}
+
 /** Image */
 .wimage {
   position: fixed;
@@ -1256,10 +1294,6 @@ var style_default = `/* stylelint-disable declaration-no-important */
   border: var(--text) 2px solid;
   background-color: var(--background);
   color: var(--text);
-}
-
-.wimage:hover .wrapper .wform {
-  display: block;
 }
 
 /* Settings */
@@ -1448,6 +1482,10 @@ var style_default = `/* stylelint-disable declaration-no-important */
   background-color: var(--main-hover);
 }
 
+.wtopbar .menu-toggle {
+  width: 28px;
+}
+
 /* Resize */
 .resize {
   position: absolute;
@@ -1526,6 +1564,7 @@ var widget_default = `<button class="wopen-button"><div>></div></button>
     <option value="PERCENTAGE">Percentage</option>
   </select></label>
   <div class="images"></div>
+  <div class="image-settings-host hidden"></div>
   <!-- <button class="pumpkin-hunt" disabled>Pumpkin Hunt!</button> -->
   <button class="add-image" disabled>Add image</button>
 </div>
@@ -1560,6 +1599,7 @@ class Widget extends Base2 {
   $progressLine;
   $progressText;
   $images;
+  $imageSettingsHost;
   $wopenButton;
   constructor(bot) {
     super();
@@ -1578,7 +1618,8 @@ class Widget extends Base2 {
       $strategy: ".strategy",
       $progressLine: ".wprogress div",
       $progressText: ".wprogress span",
-      $images: ".images"
+      $images: ".images",
+      $imageSettingsHost: ".image-settings-host"
     });
     this.$wopenButton.addEventListener("click", () => this.open = !this.open);
     this.$draw.addEventListener("click", () => this.bot.draw());
@@ -1664,6 +1705,16 @@ class Widget extends Base2 {
   }
   setDisabled(name, disabled) {
     this.element.querySelector("." + name).disabled = disabled;
+  }
+  showImageSettings(settings) {
+    this.$imageSettingsHost.classList.remove("hidden");
+    this.$imageSettingsHost.replaceChildren(settings);
+  }
+  hideImageSettings(settings) {
+    if (settings && this.$imageSettingsHost.firstElementChild !== settings)
+      return;
+    this.$imageSettingsHost.replaceChildren();
+    this.$imageSettingsHost.classList.add("hidden");
   }
   async run(status, run, fin, emoji = "⌛") {
     const originalStatus = this.status;
