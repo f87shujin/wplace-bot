@@ -1652,10 +1652,22 @@ class Widget extends Base2 {
         const image = new Image;
         image.src = reader.result;
         await promisifyEventSource(image, ["load"], ["error"]);
-        botImage = new BotImage(this.bot, WorldPosition.fromScreenPosition(this.bot, {
-          x: 256,
-          y: 32
-        }), new Pixels(this.bot, image));
+        const coordInput = prompt("Enter world pixel coordinates (globalX,globalY) or leave blank for default placement:");
+        let position2;
+        let lock = false;
+        if (coordInput && coordInput.trim()) {
+          const parts = coordInput.split(",").map((s) => parseInt(s.trim(), 10));
+          if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+            position2 = new WorldPosition(this.bot, parts[0], parts[1]);
+            lock = true;
+          }
+        }
+        if (!position2)
+          position2 = WorldPosition.fromScreenPosition(this.bot, {
+            x: 256,
+            y: 32
+          });
+        botImage = new BotImage(this.bot, position2, new Pixels(this.bot, image), undefined, undefined, undefined, undefined, undefined, lock);
       }
       this.bot.images.push(botImage);
       await this.bot.readMap();
