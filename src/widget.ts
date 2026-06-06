@@ -113,49 +113,32 @@ export class Widget extends Base {
           const image = new Image()
           image.src = reader.result as string
           await promisifyEventSource(image, ['load'], ['error'])
-          const coordInput = prompt(
-            'Enter coordinates (tileX,tileY,pixelX,pixelY) or leave blank for default placement:',
-          )
-          let position: WorldPosition | undefined
-          let lock = false
-          if (coordInput && coordInput.trim()) {
-            const parts = coordInput
-              .split(',')
-              .map((s) => parseInt(s.trim(), 10))
-            if (
-              parts.length >= 4 &&
-              !isNaN(parts[0]!) &&
-              !isNaN(parts[1]!) &&
-              !isNaN(parts[2]!) &&
-              !isNaN(parts[3]!)
-            ) {
-              position = new WorldPosition(
+          const coords = await this.promptCoordinates()
+          if (coords) {
+            botImage = new BotImage(
+              this.bot,
+              new WorldPosition(
                 this.bot,
-                parts[0]!,
-                parts[1]!,
-                parts[2]!,
-                parts[3]!,
-              )
-              lock = true
-            }
+                coords.tileX,
+                coords.tileY,
+                coords.pixelX,
+                coords.pixelY,
+              ),
+              new Pixels(this.bot, image),
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              true,
+            )
+          } else {
+            botImage = new BotImage(
+              this.bot,
+              WorldPosition.fromScreenPosition(this.bot, { x: 256, y: 32 }),
+              new Pixels(this.bot, image),
+            )
           }
-          if (!position) {
-            position = WorldPosition.fromScreenPosition(this.bot, {
-              x: 256,
-              y: 32,
-            })
-          }
-          botImage = new BotImage(
-            this.bot,
-            position,
-            new Pixels(this.bot, image),
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            lock,
-          )
         }
         this.bot.images.push(botImage)
         await this.bot.readMap()
@@ -261,6 +244,67 @@ export class Widget extends Base {
   /** Hides content */
   protected minimize() {
     this.$settings.classList.toggle('hidden')
+  }
+
+  /** Show coordinate input dialog, returns coords or undefined for default */
+  protected promptCoordinates(): Promise<
+    | {
+        tileX: number
+        tileY: number
+        pixelX: number
+        pixelY: number
+      }
+    | undefined
+  > {
+    return new Promise((resolve) => {
+      const backdrop = document.createElement('div')
+      backdrop.style.cssText =
+        'position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center'
+      const dialog = document.createElement('div')
+      dialog.className = 'wform'
+      dialog.style.cssText =
+        'display:block;border:var(--text) 2px solid;padding:16px;min-width:280px;pointer-events:auto'
+      dialog.innerHTML = `<div style="font-size:18px;margin-bottom:8px;text-align:center">Place Image</div>
+        <label style="display:flex;justify-content:space-between;margin:6px 0;align-items:center">Tile X <input class="tilex" type="number" style="width:120px" value="0"></label>
+        <label style="display:flex;justify-content:space-between;margin:6px 0;align-items:center">Tile Y <input class="tiley" type="number" style="width:120px" value="0"></label>
+        <label style="display:flex;justify-content:space-between;margin:6px 0;align-items:center">Pixel X <input class="pixelx" type="number" min="0" max="999" style="width:120px" value="0"></label>
+        <label style="display:flex;justify-content:space-between;margin:6px 0;align-items:center">Pixel Y <input class="pixely" type="number" min="0" max="999" style="width:120px" value="0"></label>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="place-btn" style="flex:1;justify-content:center">Place</button>
+          <button class="default-btn" style="flex:1;justify-content:center">Default</button>
+        </div>`
+      backdrop.append(dialog)
+      document.body.append(backdrop)
+      const place = () => {
+        const tileX = +(
+          dialog.querySelector<HTMLInputElement>('.tilex')!.value
+        )
+        const tileY = +(
+          dialog.querySelector<HTMLInputElement>('.tiley')!.value
+        )
+        const pixelX = +(
+          dialog.querySelector<HTMLInputElement>('.pixelx')!.value
+        )
+        const pixelY = +(
+          dialog.querySelector<HTMLInputElement>('.pixely')!.value
+        )
+        backdrop.remove()
+        resolve({ tileX, tileY, pixelX, pixelY })
+      }
+      const useDefault = () => {
+        backdrop.remove()
+        resolve(undefined)
+      }
+      dialog
+        .querySelector<HTMLButtonElement>('.place-btn')!
+        .addEventListener('click', place)
+      dialog
+        .querySelector<HTMLButtonElement>('.default-btn')!
+        .addEventListener('click', useDefault)
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) useDefault()
+      })
+    })
   }
 
   // protected async pumpkinHunt() {
