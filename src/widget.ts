@@ -114,7 +114,7 @@ export class Widget extends Base {
           image.src = reader.result as string
           await promisifyEventSource(image, ['load'], ['error'])
           const coordInput = prompt(
-            'Enter world pixel coordinates (globalX,globalY) or leave blank for default placement:',
+            'Enter coordinates (tileX,tileY,pixelX,pixelY) or leave blank for default placement:',
           )
           let position: WorldPosition | undefined
           let lock = false
@@ -122,8 +122,20 @@ export class Widget extends Base {
             const parts = coordInput
               .split(',')
               .map((s) => parseInt(s.trim(), 10))
-            if (parts.length >= 2 && !isNaN(parts[0]!) && !isNaN(parts[1]!)) {
-              position = new WorldPosition(this.bot, parts[0]!, parts[1]!)
+            if (
+              parts.length >= 4 &&
+              !isNaN(parts[0]!) &&
+              !isNaN(parts[1]!) &&
+              !isNaN(parts[2]!) &&
+              !isNaN(parts[3]!)
+            ) {
+              position = new WorldPosition(
+                this.bot,
+                parts[0]!,
+                parts[1]!,
+                parts[2]!,
+                parts[3]!,
+              )
               lock = true
             }
           }
