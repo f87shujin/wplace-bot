@@ -1596,6 +1596,8 @@ var widget_default = `<button class="wopen-button"><div>></div></button>
   <div class="image-settings-host hidden"></div>
   <!-- <button class="pumpkin-hunt" disabled>Pumpkin Hunt!</button> -->
   <button class="add-image" disabled>Add image</button>
+  <button class="export-all">Export all</button>
+  <button class="import-all">Import</button>
 </div>
 `;
 
@@ -1624,6 +1626,8 @@ class Widget extends Base2 {
   $topbar;
   $draw;
   $addImage;
+  $exportAll;
+  $importAll;
   $strategy;
   $progressLine;
   $progressText;
@@ -1644,6 +1648,8 @@ class Widget extends Base2 {
       $topbar: ".wtopbar",
       $draw: ".draw",
       $addImage: ".add-image",
+      $exportAll: ".export-all",
+      $importAll: ".import-all",
       $strategy: ".strategy",
       $progressLine: ".wprogress div",
       $progressText: ".wprogress span",
@@ -1653,6 +1659,8 @@ class Widget extends Base2 {
     this.$wopenButton.addEventListener("click", () => this.open = !this.open);
     this.$draw.addEventListener("click", () => this.bot.draw());
     this.$addImage.addEventListener("click", () => this.addImage());
+    this.$exportAll.addEventListener("click", () => this.exportAll());
+    this.$importAll.addEventListener("click", () => this.importAll());
     this.$strategy.addEventListener("change", () => {
       this.bot.strategy = this.$strategy.value;
     });
@@ -1698,6 +1706,39 @@ class Widget extends Base2 {
       document.location.reload();
     }, () => {
       this.setDisabled("add-image", false);
+    });
+  }
+  exportAll() {
+    const a = document.createElement("a");
+    document.body.append(a);
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(this.bot.toJSON())], { type: "application/json" }));
+    a.download = "wplace-bot-session.wbot";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  }
+  importAll() {
+    return this.run("Importing session", async () => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".wbot";
+      input.click();
+      await promisifyEventSource(input, ["change"], ["cancel", "error"]);
+      const file = input.files?.[0];
+      if (!file)
+        throw new NoImageError(this.bot);
+      const data = JSON.parse(await file.text());
+      for (let index = 0;index < data.images.length; index++) {
+        const image = await BotImage.fromJSON(this.bot, data.images[index]);
+        this.bot.images.push(image);
+        image.update();
+      }
+      this.bot.strategy = data.strategy || this.bot.strategy;
+      this.$strategy.value = this.bot.strategy;
+      await this.bot.readMap();
+      this.bot.updateTasks();
+      this.update();
+      save(this.bot, true);
     });
   }
   update() {
