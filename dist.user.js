@@ -407,6 +407,9 @@ var image_default = `<div class="wtopbar">
     <label>
       <input type="checkbox" class="draw-colors-in-order" />&nbsp;Draw colors in order
     </label>
+    <label>
+      <input type="checkbox" class="skip-unavailable" />&nbsp;Skip unavailable colors
+    </label>
   </div>
   <div class="resize n"></div>
   <div class="resize e"></div>
@@ -725,6 +728,7 @@ class BotImage extends Base2 {
   $resetSize;
   $resetSizeSpan;
   $settings;
+  $skipUnavailable;
   $strategy;
   $topbar;
   $wrapper;
@@ -756,6 +760,7 @@ class BotImage extends Base2 {
       $progressText: ".wprogress span",
       $resetSize: ".reset-size",
       $settings: ".wform",
+      $skipUnavailable: ".skip-unavailable",
       $strategy: ".strategy",
       $topbar: ".wtopbar",
       $wrapper: ".wrapper"
@@ -798,6 +803,18 @@ class BotImage extends Base2 {
     });
     this.registerEvent(this.$drawColorsInOrder, "click", () => {
       this.drawColorsInOrder = this.$drawColorsInOrder.checked;
+      save(this.bot);
+    });
+    this.registerEvent(this.$skipUnavailable, "click", () => {
+      const skip = this.$skipUnavailable.checked;
+      for (let index = 0;index < this.colors.length; index++) {
+        const drawColor = this.colors[index];
+        const pixelColor = this.pixels.colors.get(drawColor.realColor);
+        if (pixelColor && pixelColor.realColor !== pixelColor.color)
+          drawColor.disabled = skip ? true : undefined;
+      }
+      this.updateColors();
+      this.updateTasks();
       save(this.bot);
     });
     this.registerEvent(this.$lock, "click", () => {
@@ -887,6 +904,18 @@ class BotImage extends Base2 {
     this.$menuToggle.title = menuOpen ? "Close menu" : "Open menu";
     this.$drawTransparent.checked = this.drawTransparentPixels;
     this.$drawColorsInOrder.checked = this.drawColorsInOrder;
+    {
+      let allSubstitutedDisabled = true;
+      for (let index = 0;index < this.colors.length; index++) {
+        const drawColor = this.colors[index];
+        const pixelColor = this.pixels.colors.get(drawColor.realColor);
+        if (pixelColor && pixelColor.realColor !== pixelColor.color && !drawColor.disabled) {
+          allSubstitutedDisabled = false;
+          break;
+        }
+      }
+      this.$skipUnavailable.checked = allSubstitutedDisabled;
+    }
     const maxTasks = this.pixels.pixels.length * this.pixels.pixels[0].length;
     const doneTasks = maxTasks - this.tasks.length;
     const percent = doneTasks / maxTasks * 100 | 0;
