@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wplace-bot
 // @namespace    https://github.com/f87shujin
-// @version      4.6.0
+// @version      4.6.1
 // @description  Bot to automate painting on website https://wplace.live
 // @author       f87shujin
 // @license      MPL-2.0
@@ -1586,6 +1586,7 @@ var widget_default = `<button class="wopen-button"><div>></div></button>
 <div class="wform">
   <div class="wprogress"><div></div><span></span></div>
   <div class="wp wstatus"></div>
+  <div class="wp fretime"></div>
   <button class="draw" disabled>Draw</button>
   <label>Strategy:&nbsp;<select class="strategy">
     <option value="SEQUENTIAL" selected>Sequential</option>
@@ -1622,6 +1623,7 @@ class Widget extends Base2 {
   }
   $settings;
   $status;
+  $fretime;
   $minimize;
   $topbar;
   $draw;
@@ -1634,6 +1636,7 @@ class Widget extends Base2 {
   $images;
   $imageSettingsHost;
   $wopenButton;
+  meCache;
   constructor(bot) {
     super();
     this.bot = bot;
@@ -1644,6 +1647,7 @@ class Widget extends Base2 {
       $wopenButton: ".wopen-button",
       $settings: ".wform",
       $status: ".wstatus",
+      $fretime: ".fretime",
       $minimize: ".minimize",
       $topbar: ".wtopbar",
       $draw: ".draw",
@@ -1657,7 +1661,7 @@ class Widget extends Base2 {
       $imageSettingsHost: ".image-settings-host"
     });
     this.$wopenButton.addEventListener("click", () => this.open = !this.open);
-    this.$draw.addEventListener("click", () => this.bot.draw());
+    this.$draw.addEventListener("click", () => { this.meCache = undefined; this.bot.draw(); });
     this.$addImage.addEventListener("click", () => this.addImage());
     this.$exportAll.addEventListener("click", () => this.exportAll());
     this.$importAll.addEventListener("click", () => this.importAll());
@@ -1743,6 +1747,7 @@ class Widget extends Base2 {
   }
   update() {
     this.$strategy.value = this.bot.strategy;
+    this.updateChargeInfo();
     let maxTasks = 0;
     let totalTasks = 0;
     for (let index = 0;index < this.bot.images.length; index++) {
@@ -1776,6 +1781,30 @@ class Widget extends Base2 {
         this.update();
         save(this.bot);
       });
+    }
+  }
+  async updateChargeInfo() {
+    const now = Date.now();
+    if (this.meCache && now - this.meCache.time < 30000) {
+      this.$fretime.textContent = this.meCache.text;
+      return;
+    }
+    try {
+      const me = await fetch("https://backend.wplace.live/me", {
+        credentials: "include"
+      }).then((x) => x.json());
+      const max = me.charges.max;
+      const cooldownMs = me.charges.cooldownMs;
+      const totalMs = max * cooldownMs;
+      const totalMin = totalMs / 60000;
+      let text;
+      if (totalMin >= 60)
+        text = `Full bar: ~${totalMin / 60 | 0}h ${totalMin % 60 | 0}m`;
+      else
+        text = `Full bar: ~${totalMin | 0}m`;
+      this.meCache = { time: now, text };
+      this.$fretime.textContent = text;
+    } catch {
     }
   }
   setDisabled(name, disabled) {

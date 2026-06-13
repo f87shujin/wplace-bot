@@ -1,7 +1,7 @@
 import { promisifyEventSource, swap } from '@softsky/utils'
 
 import { Base } from './base'
-import { WPlaceBot } from './bot'
+import { Me, WPlaceBot } from './bot'
 import { NoImageError, WPlaceBotError } from './errors'
 import { BotImage } from './image'
 import { Pixels } from './pixels'
@@ -19,6 +19,8 @@ export enum BotStrategy {
 /** Widget UI with buttons */
 export class Widget extends Base {
   public readonly element = document.createElement('div')
+
+  protected meCache?: { time: number; text: string }
 
   public get status(): string {
     return this.$status.innerHTML
@@ -47,6 +49,7 @@ export class Widget extends Base {
   protected readonly $progressText!: HTMLSpanElement
   protected readonly $images!: HTMLDivElement
   protected readonly $imageSettingsHost!: HTMLDivElement
+  protected readonly $fretime!: HTMLDivElement
   protected readonly $wopenButton!: HTMLButtonElement
 
   // protected readonly $pumpkinHunt!: HTMLButtonElement
@@ -61,6 +64,7 @@ export class Widget extends Base {
       $wopenButton: '.wopen-button',
       $settings: '.wform',
       $status: '.wstatus',
+      $fretime: '.fretime',
       $minimize: '.minimize',
       $topbar: '.wtopbar',
       $draw: '.draw',
@@ -75,7 +79,10 @@ export class Widget extends Base {
 
     // Button actions
     this.$wopenButton.addEventListener('click', () => (this.open = !this.open))
-    this.$draw.addEventListener('click', () => this.bot.draw())
+    this.$draw.addEventListener('click', () => {
+      this.meCache = undefined
+      void this.bot.draw()
+    })
     // this.$pumpkinHunt.addEventListener('click', () => this.pumpkinHunt())
     this.$addImage.addEventListener('click', () => this.addImage())
     this.$strategy.addEventListener('change', () => {
@@ -155,6 +162,7 @@ export class Widget extends Base {
   /** Update widget position and contents */
   public update() {
     this.$strategy.value = this.bot.strategy
+    void this.updateChargeInfo()
     // Progress
     let maxTasks = 0
     let totalTasks = 0
@@ -197,6 +205,31 @@ export class Widget extends Base {
           this.update()
           save(this.bot)
         })
+    }
+  }
+
+  protected async updateChargeInfo() {
+    const now = Date.now()
+    if (this.meCache && now - this.meCache.time < 30000) {
+      this.$fretime.textContent = this.meCache.text
+      return
+    }
+    try {
+      const me = (await fetch('https://backend.wplace.live/me', {
+        credentials: 'include',
+      }).then((x) => x.json())) as Me
+      const max = me.charges.max
+      const cooldownMs = me.charges.cooldownMs
+      const totalMs = max * cooldownMs
+      const totalMin = totalMs / 60000
+      let text: string
+      if (totalMin >= 60)
+        text = `Full bar: ~${(totalMin / 60) | 0}h ${totalMin % 60 | 0}m`
+      else text = `Full bar: ~${totalMin | 0}m`
+      this.meCache = { time: now, text }
+      this.$fretime.textContent = text
+    } catch {
+      /* ignore fetch errors */
     }
   }
 
