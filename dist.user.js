@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wplace-bot
 // @namespace    https://github.com/f87shujin
-// @version      4.5.4
+// @version      4.6.0
 // @description  Bot to automate painting on website https://wplace.live
 // @author       f87shujin
 // @license      MPL-2.0
