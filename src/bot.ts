@@ -440,7 +440,7 @@ export class WPlaceBot {
         shiftKey: true,
       }),
     )
-    await new Promise((resolve) => requestAnimationFrame(resolve))
+    await wait(10)
     document.documentElement.dispatchEvent(
       new KeyboardEvent('keydown', {
         key: ' ',
