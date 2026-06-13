@@ -197,7 +197,7 @@ export class WPlaceBot {
               ) {
                 const task = this.images[imageIndex]!.tasks.shift()
                 if (!task) continue
-                this.drawTask(task)
+                await this.drawTask(task)
                 charges--
                 await wait(1)
                 end = false
@@ -226,7 +226,7 @@ export class WPlaceBot {
                   minImage = image
                 }
               }
-              this.drawTask(minImage.tasks.shift()!)
+              await this.drawTask(minImage.tasks.shift()!)
               charges--
               await wait(1)
             }
@@ -244,7 +244,7 @@ export class WPlaceBot {
                 task && charges > 0;
                 task = image.tasks.shift()
               ) {
-                this.drawTask(task)
+                await this.drawTask(task)
                 charges--
                 await wait(1)
               }
@@ -423,7 +423,7 @@ export class WPlaceBot {
   }
 
   /** Draw one task */
-  protected drawTask(task: DrawTask) {
+  protected async drawTask(task: DrawTask) {
     if (this.lastColor !== task.color) {
       ;(
         document.getElementById('color-' + task.color) as HTMLButtonElement
@@ -440,6 +440,7 @@ export class WPlaceBot {
         shiftKey: true,
       }),
     )
+    await new Promise((resolve) => requestAnimationFrame(resolve))
     document.documentElement.dispatchEvent(
       new KeyboardEvent('keydown', {
         key: ' ',

@@ -1944,7 +1944,7 @@ class WPlaceBot {
               const task = this.images[imageIndex].tasks.shift();
               if (!task)
                 continue;
-              this.drawTask(task);
+              await this.drawTask(task);
               charges--;
               await wait(1);
               end = false;
@@ -1966,7 +1966,7 @@ class WPlaceBot {
                 minImage = image;
               }
             }
-            this.drawTask(minImage.tasks.shift());
+            await this.drawTask(minImage.tasks.shift());
             charges--;
             await wait(1);
           }
@@ -1976,7 +1976,7 @@ class WPlaceBot {
           for (let imageIndex = 0;imageIndex < this.images.length; imageIndex++) {
             const image = this.images[imageIndex];
             for (let task = image.tasks.shift();task && charges > 0; task = image.tasks.shift()) {
-              this.drawTask(task);
+              await this.drawTask(task);
               charges--;
               await wait(1);
             }
@@ -2095,7 +2095,7 @@ class WPlaceBot {
       await wait(1);
     }
   }
-  drawTask(task) {
+  async drawTask(task) {
     if (this.lastColor !== task.color) {
       document.getElementById("color-" + task.color).click();
       this.lastColor = task.color;
@@ -2108,6 +2108,7 @@ class WPlaceBot {
       clientY: position.y + halfPixel,
       shiftKey: true
     }));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
     document.documentElement.dispatchEvent(new KeyboardEvent("keydown", {
       key: " ",
       code: "Space",
