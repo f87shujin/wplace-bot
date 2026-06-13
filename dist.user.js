@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wplace-bot
 // @namespace    https://github.com/f87shujin
-// @version      4.6.2
+// @version      4.6.3
 // @description  Bot to automate painting on website https://wplace.live
 // @author       f87shujin
 // @license      MPL-2.0
@@ -391,7 +391,7 @@ var image_default = `<div class="wtopbar">
     <label>Brightness:&nbsp;<input class="brightness" type="number" step="0.1"/></label>
     <label>
       Strategy:&nbsp;<select class="strategy">
-        <option value="RANDOM" selected>Random</option>
+        <option value="DOWN" selected>Down</option>
         <option value="DOWN">Down</option>
         <option value="UP">Up</option>
         <option value="LEFT">Left</option>
@@ -732,7 +732,7 @@ class BotImage extends Base2 {
   $strategy;
   $topbar;
   $wrapper;
-  constructor(bot, position, pixels, strategy = "SPIRAL_FROM_CENTER" /* SPIRAL_FROM_CENTER */, opacity = 50, drawTransparentPixels = false, drawColorsInOrder = false, colors = [], lock = false) {
+  constructor(bot, position, pixels, strategy = "DOWN" /* DOWN */, opacity = 50, drawTransparentPixels = false, drawColorsInOrder = false, colors = [], lock = false) {
     super();
     this.bot = bot;
     this.position = position;

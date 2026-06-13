@@ -88,7 +88,7 @@ export class BotImage extends Base {
     /** Parsed imageto draw */
     public pixels: Pixels,
     /** Order of pixels to draw */
-    public strategy = ImageStrategy.SPIRAL_FROM_CENTER,
+    public strategy = ImageStrategy.DOWN,
     /** Opacity of overlay */
     public opacity = 50,
     /** Should we erase pixels there transparency should be */
