@@ -1,0 +1,6 @@
+{
+  "extends": "@softsky/configs/tsconfig.json",
+  "compilerOptions": {
+    "types": ["bun"]
+  }
+}

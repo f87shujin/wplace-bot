@@ -1,0 +1,17 @@
+/* stylelint-disable declaration-no-important */
+@import 'https://fonts.googleapis.com/css2?family=Tiny5&display=swap';
+
+:root {
+  --text-invert: #fff;
+  --resize: 8px;
+  --text: #422e2c;
+  --background: #fbe3cb;
+  --background-hover: #f0d1b3;
+  --background-disabled: #a37648;
+  --main: #66bbb4;
+  --main-hover: #48a19a;
+}
+
+.maplibregl-marker[aria-label='WBOT_FAVORITE'] {
+  display: none !important;
+}
