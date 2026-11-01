@@ -119,6 +119,7 @@ export class BotImage extends Base {
   protected readonly $drawTransparent!: HTMLInputElement
   protected readonly $export!: HTMLDivElement
   protected readonly $lock!: HTMLButtonElement
+  protected readonly $menuToggle!: HTMLButtonElement
   protected readonly $opacity!: HTMLInputElement
   protected readonly $progressLine!: HTMLDivElement
   protected readonly $progressText!: HTMLSpanElement
@@ -148,7 +149,7 @@ export class BotImage extends Base {
     /** Brightness of image */
     public brightness = 0,
     /** Order of pixels to draw */
-    public strategy = ImageStrategy.SPIRAL_TO_CENTER,
+    public strategy = ImageStrategy.DOWN,
     /** Opacity of overlay */
     public opacity = 50,
     /** Should bot draw colors in order */
@@ -186,6 +187,7 @@ export class BotImage extends Base {
       $name: '.name',
       $unownedColorStrategyLabel: '.unowned-color-strategy',
       $openSettings: '.open-settings',
+      $menuToggle: '.menu-toggle',
       $dialog: 'dialog',
       $canvas: 'canvas',
     })
@@ -201,6 +203,20 @@ export class BotImage extends Base {
 
     this.$openSettings.addEventListener('click', () => {
       this.$dialog.showModal()
+    })
+    // Inline settings toggle (fork feature)
+    this.$menuToggle.addEventListener('click', () => {
+      const open = !this.element.classList.contains('menu-open')
+      for (const $image of document.querySelectorAll<HTMLElement>('.menu-open')) {
+        if ($image !== this.element) {
+          $image.classList.remove('menu-open')
+          $image.shadowRoot?.querySelector<HTMLElement>('dialog.form')?.setAttribute('data-inline', '')
+        }
+      }
+      this.element.classList.toggle('menu-open', open)
+      if (open) this.bot.widget.showImageSettings(this.$settings)
+      else this.bot.widget.hideImageSettings(this.$settings)
+      this.updateUI()
     })
     // Close on backdrop click
     this.$dialog.addEventListener('click', (event) => {
@@ -397,6 +413,9 @@ export class BotImage extends Base {
     this.$opacity.valueAsNumber = this.opacity
     this.$drawColorsInOrder.checked = this.drawColorsInOrder
     this.$name.value = this.name
+    const menuOpen = this.element.classList.contains('menu-open')
+    this.$menuToggle.textContent = menuOpen ? '▾' : '▴'
+    this.$menuToggle.title = menuOpen ? 'Close menu' : 'Open menu'
     const maxTasks = this.getMaxTasks()
     const doneTasks = maxTasks - this.tasks.length / 2
     const percent = formatPercent(doneTasks / maxTasks)
@@ -417,6 +436,10 @@ export class BotImage extends Base {
   /** Removes image */
   public override destroy() {
     super.destroy()
+    if (this.element.classList.contains('menu-open')) {
+      this.bot.widget.hideImageSettings(this.$settings)
+      this.element.classList.remove('menu-open')
+    }
     this.element.remove()
     removeFromArray(this.bot.images, this)
     this.bot.widget.update()

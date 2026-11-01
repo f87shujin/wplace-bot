@@ -6,7 +6,7 @@
   display: flex;
   flex-direction: column;
   overflow: visible;
-  width: 256px;
+  width: 640px;
   height: 100dvh;
   border-right: var(--text) 2px solid;
   background-color: var(--background);
@@ -102,4 +102,38 @@
   font-weight: bolder;
   font-size: 24px;
   line-height: 100%;
+}
+
+/* Inline image settings host (fork feature) */
+.image-settings-host {
+  overflow-y: auto;
+  max-height: 40vh;
+  border-top: var(--text) 2px solid;
+  border-bottom: var(--text) 2px solid;
+}
+
+.image-settings-host.hidden {
+  display: none;
+}
+
+.image-settings-host dialog.form {
+  position: static;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: none;
+  background: transparent;
+  overflow: visible;
+}
+
+.image-settings-host dialog.form::backdrop {
+  display: none;
+}
+
+.fretime {
+  font-size: 18px;
+  opacity: 0.8;
 }

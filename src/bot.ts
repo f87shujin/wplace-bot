@@ -317,7 +317,8 @@ export class WPlaceBot {
           )
           charges--
           progress((initialCharges - charges) / initialCharges)
-          await wait(1)
+          // Wait for the cooldown to tick so the next pixel registers (fork fix)
+          await wait(10)
           return true
         }
 

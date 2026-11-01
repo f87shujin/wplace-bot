@@ -1,6 +1,6 @@
 import { promisifyEventSource, swap } from '@softsky/utils'
 import { Base } from './base'
-import { WPlaceBot } from './bot'
+import { type Me, WPlaceBot } from './bot'
 import { NoImageError, WPlaceBotError } from './errors'
 import { BotImage } from './image'
 import { migrateImage, save } from './save'
@@ -47,7 +47,11 @@ export class Widget extends Base {
   protected readonly $progressText!: HTMLSpanElement
   protected readonly $images!: HTMLDivElement
   protected readonly $openButton!: HTMLButtonElement
+  protected readonly $imageSettingsHost!: HTMLDivElement
+  protected readonly $fretime!: HTMLDivElement
   public readonly $autoDraw!: HTMLButtonElement
+
+  protected meCache?: { time: number; text: string }
 
   // protected readonly $pumpkinHunt!: HTMLButtonElement
 
@@ -67,6 +71,8 @@ export class Widget extends Base {
       $progressText: '.progress span',
       $images: '.images',
       $autoDraw: '.auto-draw',
+      $fretime: '.fretime',
+      $imageSettingsHost: '.image-settings-host',
       // $pumpkinHunt: '.pumpkin-hunt',
     })
 
@@ -77,7 +83,10 @@ export class Widget extends Base {
       void save(this.bot)
     })
     this.bot.fixSpaceInInput(this.$title)
-    this.$draw.addEventListener('click', () => this.bot.draw())
+    this.$draw.addEventListener('click', () => {
+      this.meCache = undefined
+      void this.bot.draw()
+    })
     // this.$pumpkinHunt.addEventListener('click', () => this.pumpkinHunt())
     this.$addImage.addEventListener('click', () => this.addImage())
     this.$strategy.addEventListener('change', () => {
@@ -118,8 +127,10 @@ export class Widget extends Base {
           const loaded = promisifyEventSource(reader, ['load'], ['error'])
           reader.readAsDataURL(file)
           await loaded
+          const coords = await this.promptCoordinates()
           await BotImage.fromJSON(this.bot, {
             url: reader.result as string,
+            ...(coords ? { position: [coords.tileX * 1000 + coords.pixelX, coords.tileY * 1000 + coords.pixelY] as const } : {}),
           })
         }
         await save(this.bot, true)
@@ -135,6 +146,7 @@ export class Widget extends Base {
   public update() {
     this.$title.value = this.bot.title
     this.$strategy.value = this.bot.strategy
+    void this.updateChargeInfo()
     // Progress
     let maxTasks = 0
     let totalTasks = 0
@@ -210,6 +222,87 @@ export class Widget extends Base {
   /** Disable/enable element by class name */
   public setDisabled(name: string, disabled: boolean) {
     this.shadow.querySelector<HTMLButtonElement>('.' + name)!.disabled = disabled
+  }
+
+  protected async updateChargeInfo() {
+    const now = Date.now()
+    if (this.meCache && now - this.meCache.time < 30000) {
+      this.$fretime.textContent = this.meCache.text
+      return
+    }
+    try {
+      const me = (await fetch('https://backend.wplace.live/me', {
+        credentials: 'include',
+      }).then((x) => x.json())) as Me
+      const max = me.charges.max
+      const cooldownMs = me.charges.cooldownMs
+      const totalMin = (max * cooldownMs) / 60000
+      let text: string
+      if (totalMin >= 60) text = `Full bar: ~${(totalMin / 60) | 0}h ${(totalMin % 60) | 0}m`
+      else text = `Full bar: ~${totalMin | 0}m`
+      this.meCache = { time: now, text }
+      this.$fretime.textContent = text
+    } catch {
+      /* ignore fetch errors */
+    }
+  }
+
+  public showImageSettings(settings: HTMLDivElement) {
+    this.$imageSettingsHost.classList.remove('hidden')
+    this.$imageSettingsHost.replaceChildren(settings)
+  }
+
+  public hideImageSettings(settings?: HTMLDivElement) {
+    if (settings && this.$imageSettingsHost.firstElementChild !== settings) return
+    this.$imageSettingsHost.replaceChildren()
+    this.$imageSettingsHost.classList.add('hidden')
+  }
+
+  /** Show coordinate input dialog, returns coords or undefined for default */
+  protected promptCoordinates(): Promise<
+    { tileX: number; tileY: number; pixelX: number; pixelY: number } | undefined
+  > {
+    return new Promise((resolve) => {
+      const backdrop = document.createElement('div')
+      backdrop.style.cssText =
+        'position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center'
+      const dialog = document.createElement('div')
+      dialog.className = 'coords-dialog'
+      dialog.style.cssText =
+        'display:block;font-family:\'Tiny5\',sans-serif;font-size:20px;border:var(--text) 2px solid;background:var(--background);color:var(--text);padding:16px;min-width:280px;pointer-events:auto'
+      dialog.innerHTML = `<div style="font-size:26px;margin-bottom:8px;text-align:center">Place Image</div>
+        <label style="display:flex;justify-content:space-between;margin:6px 0;align-items:center">Tile X <input class="tilex" type="number" style="width:120px" value="0"></label>
+        <label style="display:flex;justify-content:space-between;margin:6px 0;align-items:center">Tile Y <input class="tiley" type="number" style="width:120px" value="0"></label>
+        <label style="display:flex;justify-content:space-between;margin:6px 0;align-items:center">Pixel X <input class="pixelx" type="number" min="0" max="999" style="width:120px" value="0"></label>
+        <label style="display:flex;justify-content:space-between;margin:6px 0;align-items:center">Pixel Y <input class="pixely" type="number" min="0" max="999" style="width:120px" value="0"></label>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="place-btn" style="flex:1;justify-content:center">Place</button>
+          <button class="default-btn" style="flex:1;justify-content:center">Default</button>
+        </div>`
+      backdrop.append(dialog)
+      document.body.append(backdrop)
+      const num = (sel: string) =>
+        Number(dialog.querySelector<HTMLInputElement>(sel)!.value)
+      const place = () => {
+        const coords = {
+          tileX: num('.tilex'),
+          tileY: num('.tiley'),
+          pixelX: num('.pixelx'),
+          pixelY: num('.pixely'),
+        }
+        backdrop.remove()
+        resolve(coords)
+      }
+      const useDefault = () => {
+        backdrop.remove()
+        resolve(undefined)
+      }
+      dialog.querySelector<HTMLButtonElement>('.place-btn')!.addEventListener('click', place)
+      dialog.querySelector<HTMLButtonElement>('.default-btn')!.addEventListener('click', useDefault)
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) useDefault()
+      })
+    })
   }
 
   /** Show status of running task */

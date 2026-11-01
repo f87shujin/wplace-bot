@@ -1,5 +1,6 @@
 <div class="topbar">
   <input type="text" class="name" />
+  <button class="menu-toggle" title="Toggle inline settings">▴</button>
   <button class="open-settings" title="Open settings">✏️</button>
   <button class="export" title="Export image">📤</button>
   <button class="lock" title="Lock/unlock image movement">🔓</button>
@@ -29,12 +30,12 @@
   <label color="How to draw">
     Strategy:&nbsp;<select class="strategy">
       <option value="RANDOM">Random</option>
-      <option value="DOWN">Top to Bottom</option>
+      <option value="DOWN" selected>Top to Bottom</option>
       <option value="UP">Bottom to Top</option>
       <option value="LEFT">Right to Left</option>
       <option value="RIGHT">Left to Right</option>
       <option value="SPIRAL_FROM_CENTER">Spiral out</option>
-      <option value="SPIRAL_TO_CENTER" selected>Spiral in</option>
+      <option value="SPIRAL_TO_CENTER">Spiral in</option>
     </select>
   </label>
   <button class="reset-size">Reset size [<span></span>px]</button>

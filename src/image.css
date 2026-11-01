@@ -150,3 +150,8 @@ input {
   height: 1px;
   pointer-events: none;
 }
+
+/* Inline settings toggle (fork feature) */
+.topbar .menu-toggle {
+  width: 28px;
+}
